@@ -28,6 +28,16 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
+      - name: Verify Expo token is configured
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "EXPO_TOKEN is missing. Add it in GitHub Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "EXPO_TOKEN is present."
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
       - name: Publish OTA update (production)
         if: github.ref == 'refs/heads/main'
         run: eas update --channel production --message "$UPDATE_MESSAGE" --non-interactive
