@@ -12,23 +12,23 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 
-import meals, { CATEGORIES } from '../data/meals';
+import meals, { CATEGORIES, Category, Meal } from '../data/meals';
 import MealCard from '../components/MealCard';
 import SuggestButton from '../components/SuggestButton';
 import CategoryTabs from '../components/CategoryTabs';
 
 const FAVORITES_KEY = '@hungr_favorites';
 
-function getRandomMeal(pool) {
+function getRandomMeal(pool: Meal[]): Meal | null {
   if (!pool || pool.length === 0) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 export default function HomeScreen() {
-  const [currentMeal, setCurrentMeal] = useState(null);
+  const [currentMeal, setCurrentMeal] = useState<Meal | null>(null);
   const [isBrokeMode, setIsBrokeMode] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES.ALL);
-  const [favorites, setFavorites] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category>(CATEGORIES.ALL);
+  const [favorites, setFavorites] = useState<Meal[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
   useEffect(() => {
@@ -39,14 +39,14 @@ export default function HomeScreen() {
     try {
       const stored = await AsyncStorage.getItem(FAVORITES_KEY);
       if (stored) {
-        setFavorites(JSON.parse(stored));
+        setFavorites(JSON.parse(stored) as Meal[]);
       }
     } catch {
       // silently ignore storage errors
     }
   };
 
-  const saveFavorites = async (updated) => {
+  const saveFavorites = async (updated: Meal[]) => {
     try {
       await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
     } catch {
@@ -54,7 +54,7 @@ export default function HomeScreen() {
     }
   };
 
-  const getMealPool = useCallback(() => {
+  const getMealPool = useCallback((): Meal[] => {
     let pool = meals;
     if (isBrokeMode) {
       pool = pool.filter((m) => m.isBroke);
@@ -86,7 +86,7 @@ export default function HomeScreen() {
 
   const handleToggleFavorite = useCallback(async () => {
     if (!currentMeal) return;
-    let updated;
+    let updated: Meal[];
     if (isFavorite) {
       updated = favorites.filter((f) => f.id !== currentMeal.id);
     } else {
@@ -157,7 +157,7 @@ export default function HomeScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.brokeToggleText}>
-                {isBrokeMode ? '💀 Broke Mode ON' : '💀 I\'m Broke Mode'}
+                {isBrokeMode ? '💀 Broke Mode ON' : "💀 I'm Broke Mode"}
               </Text>
             </TouchableOpacity>
 
@@ -204,7 +204,13 @@ export default function HomeScreen() {
   );
 }
 
-function FavoritesView({ favorites, onSelect, onRemove }) {
+interface FavoritesViewProps {
+  favorites: Meal[];
+  onSelect: (meal: Meal) => void;
+  onRemove: (meal: Meal) => void;
+}
+
+function FavoritesView({ favorites, onSelect, onRemove }: FavoritesViewProps) {
   if (favorites.length === 0) {
     return (
       <View style={styles.emptyFavorites}>
