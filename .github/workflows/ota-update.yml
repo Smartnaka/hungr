@@ -28,23 +28,13 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: Verify and normalize Expo token
+      - name: Verify Expo token is configured
         run: |
-          CLEAN_EXPO_TOKEN="$(printf "%s" "$EXPO_TOKEN" | tr -d '\r\n')"
-
-          if [ -z "$CLEAN_EXPO_TOKEN" ]; then
+          if [ -z "$EXPO_TOKEN" ]; then
             echo "EXPO_TOKEN is missing. Add it in GitHub Settings → Secrets and variables → Actions."
             exit 1
           fi
-
-          if printf "%s" "$CLEAN_EXPO_TOKEN" | grep -q '[[:space:]]'; then
-            echo "EXPO_TOKEN contains whitespace. Re-save the secret with only the raw token value."
-            exit 1
-          fi
-
-          echo "::add-mask::$CLEAN_EXPO_TOKEN"
-          echo "EXPO_TOKEN=$CLEAN_EXPO_TOKEN" >> "$GITHUB_ENV"
-          echo "EXPO_TOKEN is present and normalized."
+          echo "EXPO_TOKEN is present."
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
