@@ -1,7 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Meal } from '../data/meals';
 
-export default function MealCard({ meal, isFavorite, onToggleFavorite }) {
+interface MealCardProps {
+  meal: Meal | null;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+}
+
+export default function MealCard({ meal, isFavorite, onToggleFavorite }: MealCardProps) {
   if (!meal) {
     return (
       <View style={[styles.card, styles.emptyCard]}>

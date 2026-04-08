@@ -1,7 +1,12 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 
-export default function SuggestButton({ onPress, isBroke }) {
+interface SuggestButtonProps {
+  onPress: () => void;
+  isBroke: boolean;
+}
+
+export default function SuggestButton({ onPress, isBroke }: SuggestButtonProps) {
   return (
     <TouchableOpacity
       style={[styles.button, isBroke && styles.brokeButton]}

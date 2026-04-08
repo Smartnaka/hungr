@@ -1,10 +1,15 @@
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, StyleSheet, View } from 'react-native';
-import { CATEGORIES } from '../data/meals';
+import { ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { CATEGORIES, Category } from '../data/meals';
 
-const TABS = Object.values(CATEGORIES);
+const TABS = Object.values(CATEGORIES) as Category[];
 
-export default function CategoryTabs({ selected, onSelect }) {
+interface CategoryTabsProps {
+  selected: Category;
+  onSelect: (category: Category) => void;
+}
+
+export default function CategoryTabs({ selected, onSelect }: CategoryTabsProps) {
   return (
     <ScrollView
       horizontal

@@ -3,9 +3,19 @@ export const CATEGORIES = {
   LOCAL: 'Local',
   FAST_FOOD: 'Fast Food',
   SNACKS: 'Snacks',
-};
+} as const;
 
-const meals = [
+export type Category = (typeof CATEGORIES)[keyof typeof CATEGORIES];
+
+export interface Meal {
+  id: number;
+  name: string;
+  emoji: string;
+  category: Category;
+  isBroke: boolean;
+}
+
+const meals: Meal[] = [
   // Local meals
   { id: 1, name: 'Jollof Rice', emoji: '🍚', category: CATEGORIES.LOCAL, isBroke: false },
   { id: 2, name: 'Fried Rice', emoji: '🍳', category: CATEGORIES.LOCAL, isBroke: false },
