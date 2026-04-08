@@ -42,12 +42,12 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: eas update --channel production --message "$UPDATE_MESSAGE" --non-interactive
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_TOKEN: ${{ env.EXPO_TOKEN }}
           UPDATE_MESSAGE: ${{ github.event.head_commit.message }}
 
       - name: Publish OTA update (preview)
         if: github.ref == 'refs/heads/preview'
         run: eas update --channel preview --message "$UPDATE_MESSAGE" --non-interactive
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_TOKEN: ${{ env.EXPO_TOKEN }}
           UPDATE_MESSAGE: ${{ github.event.head_commit.message }}
