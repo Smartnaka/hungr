@@ -23,7 +23,7 @@ hungr is a lightweight React Native (Expo) app that suggests random meals from a
 
 | Layer | Choice |
 |---|---|
-| Framework | React Native (Expo ~51) |
+| Framework | React Native (Expo ~55) |
 | Storage | AsyncStorage |
 | Clipboard | expo-clipboard |
 | Sharing | React Native Share API |
@@ -43,6 +43,46 @@ npm run android
 
 # Run on iOS
 npm run ios
+```
+
+## EAS Build
+
+This project is configured for [Expo Application Services (EAS)](https://docs.expo.dev/build/introduction/) builds.
+
+### Prerequisites
+
+```bash
+npm install -g eas-cli
+eas login
+```
+
+### First-time setup
+
+After cloning, link the project to your Expo account to replace the `your-project-id` placeholders in `app.json`:
+
+```bash
+eas init
+```
+
+This updates `app.json` with your real `extra.eas.projectId` and `updates.url`.
+
+### Build profiles
+
+| Profile | Distribution | Purpose |
+|---|---|---|
+| `development` | Internal | Local dev with Expo Dev Client |
+| `preview` | Internal | QA/testing builds |
+| `production` | App Store / Play Store | Release builds |
+
+```bash
+# Development build
+eas build --profile development --platform all
+
+# Preview build
+eas build --profile preview --platform all
+
+# Production build
+eas build --profile production --platform all
 ```
 
 ## Project Structure
