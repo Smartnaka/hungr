@@ -123,7 +123,7 @@ export default function HomeScreen() {
             style={[styles.favoritesToggle, showFavorites && styles.favoritesToggleActive]}
             onPress={() => setShowFavorites((v) => !v)}
           >
-            <Text style={styles.favoritesToggleText}>
+            <Text style={[styles.favoritesToggleText, showFavorites && styles.favoritesToggleTextActive]}>
               {showFavorites ? '← Back' : `❤️ ${favorites.length}`}
             </Text>
           </TouchableOpacity>
@@ -156,7 +156,7 @@ export default function HomeScreen() {
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.brokeToggleText}>
+              <Text style={[styles.brokeToggleText, isBrokeMode && styles.brokeToggleTextActive]}>
                 {isBrokeMode ? '💀 Broke Mode ON' : "💀 I'm Broke Mode"}
               </Text>
             </TouchableOpacity>
@@ -277,6 +277,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FF6B35',
   },
+  favoritesToggleTextActive: {
+    color: '#FFFFFF',
+  },
   title: {
     fontSize: 36,
     fontWeight: '800',
@@ -304,6 +307,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#444',
+  },
+  brokeToggleTextActive: {
+    color: '#FFFFFF',
   },
   tabsWrapper: {
     marginBottom: 20,
