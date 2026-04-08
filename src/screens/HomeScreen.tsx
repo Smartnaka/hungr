@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,92 +9,29 @@ import {
   Alert,
   Share,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 
-import meals, { CATEGORIES, Category, Meal } from '../data/meals';
+import { CATEGORIES, Category, Meal } from '../data/meals';
 import MealCard from '../components/MealCard';
 import SuggestButton from '../components/SuggestButton';
 import CategoryTabs from '../components/CategoryTabs';
-
-const FAVORITES_KEY = '@hungr_favorites';
-
-function getRandomMeal(pool: Meal[]): Meal | null {
-  if (!pool || pool.length === 0) return null;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
+import { useFavorites } from '../hooks/useFavorites';
+import { useMealSuggestion } from '../hooks/useMealSuggestion';
 
 export default function HomeScreen() {
-  const [currentMeal, setCurrentMeal] = useState<Meal | null>(null);
   const [isBrokeMode, setIsBrokeMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>(CATEGORIES.ALL);
-  const [favorites, setFavorites] = useState<Meal[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  useEffect(() => {
-    loadFavorites();
-  }, []);
+  const { favorites, toggleFavorite, removeFavorite, isFavorite } = useFavorites();
+  const { currentMeal, setCurrentMeal, suggestMeal } = useMealSuggestion(isBrokeMode, selectedCategory);
 
-  const loadFavorites = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        setFavorites(JSON.parse(stored) as Meal[]);
-      }
-    } catch {
-      // silently ignore storage errors
-    }
-  };
-
-  const saveFavorites = async (updated: Meal[]) => {
-    try {
-      await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-    } catch {
-      // silently ignore storage errors
-    }
-  };
-
-  const getMealPool = useCallback((): Meal[] => {
-    let pool = meals;
-    if (isBrokeMode) {
-      pool = pool.filter((m) => m.isBroke);
-    }
-    if (selectedCategory !== CATEGORIES.ALL) {
-      pool = pool.filter((m) => m.category === selectedCategory);
-    }
-    return pool;
-  }, [isBrokeMode, selectedCategory]);
-
-  const handleSuggest = useCallback(() => {
-    const pool = getMealPool();
-    if (pool.length === 0) {
-      Alert.alert('No meals found', 'Try changing the filters to see more options.');
-      return;
-    }
-    // avoid repeating the same meal if there are alternatives
-    if (pool.length > 1 && currentMeal) {
-      const filtered = pool.filter((m) => m.id !== currentMeal.id);
-      setCurrentMeal(getRandomMeal(filtered));
-    } else {
-      setCurrentMeal(getRandomMeal(pool));
-    }
-  }, [getMealPool, currentMeal]);
-
-  const isFavorite = currentMeal
-    ? favorites.some((f) => f.id === currentMeal.id)
-    : false;
+  const handleSuggest = suggestMeal;
 
   const handleToggleFavorite = useCallback(async () => {
     if (!currentMeal) return;
-    let updated: Meal[];
-    if (isFavorite) {
-      updated = favorites.filter((f) => f.id !== currentMeal.id);
-    } else {
-      updated = [...favorites, currentMeal];
-    }
-    setFavorites(updated);
-    await saveFavorites(updated);
-  }, [currentMeal, favorites, isFavorite]);
+    await toggleFavorite(currentMeal);
+  }, [currentMeal, toggleFavorite]);
 
   const handleCopy = useCallback(async () => {
     if (!currentMeal) return;
@@ -136,11 +73,7 @@ export default function HomeScreen() {
               setCurrentMeal(meal);
               setShowFavorites(false);
             }}
-            onRemove={async (meal) => {
-              const updated = favorites.filter((f) => f.id !== meal.id);
-              setFavorites(updated);
-              await saveFavorites(updated);
-            }}
+            onRemove={removeFavorite}
           />
         ) : (
           <>
@@ -176,7 +109,7 @@ export default function HomeScreen() {
             <View style={styles.cardWrapper}>
               <MealCard
                 meal={currentMeal}
-                isFavorite={isFavorite}
+                isFavorite={isFavorite(currentMeal)}
                 onToggleFavorite={handleToggleFavorite}
               />
             </View>
