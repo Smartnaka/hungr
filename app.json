@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#FF6B35"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "updates": {
       "fallbackToCacheTimeout": 0,
       "checkAutomatically": "ON_LOAD",
@@ -38,6 +40,9 @@
       "eas": {
         "projectId": "d916ea63-70d6-4572-a8d2-f313c30de176"
       }
-    }
+    },
+    "plugins": [
+      "./plugins/withPinnedGradle"
+    ]
   }
 }
