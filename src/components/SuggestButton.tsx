@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   icon: {
-    fontSize: 22,
+    fontSize: 18,
   },
   label: {
     fontSize: 20,
