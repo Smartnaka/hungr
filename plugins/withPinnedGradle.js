@@ -2,7 +2,7 @@ const { withDangerousMod } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
-const TARGET_GRADLE_VERSION = '8.10.2';
+const TARGET_GRADLE_VERSION = '8.13';
 const TARGET_DISTRIBUTION_URL = `https\\://services.gradle.org/distributions/gradle-${TARGET_GRADLE_VERSION}-bin.zip`;
 const TARGET_KOTLIN_VERSION = '2.0.21';
 
