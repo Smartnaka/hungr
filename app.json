@@ -15,7 +15,6 @@
       "**/*"
     ],
     "updates": {
-      "fallbackToCacheTimeout": 0,
       "checkAutomatically": "ON_LOAD",
       "url": "https://u.expo.dev/d916ea63-70d6-4572-a8d2-f313c30de176"
     },
