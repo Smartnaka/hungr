@@ -25,16 +25,16 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.hungr.app"
     },
+    "androidNavigationBar": {
+      "backgroundColor": "#FFF8F5",
+      "barStyle": "dark-content"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FF6B35"
       },
-      "package": "com.hungr.app",
-      "androidNavigationBar": {
-        "backgroundColor": "#FFF8F5",
-        "barStyle": "dark-content"
-      }
+      "package": "com.hungr.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
