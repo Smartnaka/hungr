@@ -30,7 +30,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FF6B35"
       },
-      "package": "com.hungr.app"
+      "package": "com.hungr.app",
+      "androidNavigationBar": {
+        "backgroundColor": "#FFF8F5",
+        "barStyle": "dark-content"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
