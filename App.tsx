@@ -42,7 +42,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="dark" backgroundColor="#FFF8F5" />
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
         {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
         <HomeScreen />
       </SafeAreaProvider>
