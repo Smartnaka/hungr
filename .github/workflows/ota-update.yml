@@ -40,7 +40,7 @@ jobs:
 
       - name: Publish OTA update (production)
         if: github.ref == 'refs/heads/main'
-        run: eas update --channel production --message "$UPDATE_MESSAGE"
+        run: eas update --branch main --channel production --message "$UPDATE_MESSAGE"
         env:
           CI: "1"
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -48,7 +48,7 @@ jobs:
 
       - name: Publish OTA update (preview)
         if: github.ref == 'refs/heads/preview'
-        run: eas update --channel preview --message "$UPDATE_MESSAGE"
+        run: eas update --branch preview --channel preview --message "$UPDATE_MESSAGE"
         env:
           CI: "1"
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
