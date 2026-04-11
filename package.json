@@ -12,11 +12,15 @@
     "@react-native-async-storage/async-storage": "~2.2.0",
     "expo": "~55.0.13",
     "expo-clipboard": "~55.0.13",
+    "expo-haptics": "^55.0.14",
+    "expo-linear-gradient": "^55.0.13",
     "expo-sharing": "~55.0.18",
     "expo-status-bar": "~55.0.5",
     "expo-updates": "~55.0.20",
     "react": "19.2.0",
     "react-native": "0.83.4",
+    "react-native-gesture-handler": "^2.31.1",
+    "react-native-reanimated": "^3.19.5",
     "react-native-safe-area-context": "~5.6.2"
   },
   "devDependencies": {

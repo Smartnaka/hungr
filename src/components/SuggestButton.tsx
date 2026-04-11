@@ -1,23 +1,45 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { Pressable, Text, StyleSheet, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 
 interface SuggestButtonProps {
   onPress: () => void;
   isBroke: boolean;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export default function SuggestButton({ onPress, isBroke }: SuggestButtonProps) {
+  const scale = useSharedValue(1);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+  };
+
   return (
-    <TouchableOpacity
-      style={[styles.button, isBroke && styles.brokeButton]}
+    <AnimatedPressable
+      style={[styles.button, isBroke && styles.brokeButton, animStyle]}
       onPress={onPress}
-      activeOpacity={0.85}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
       <View style={styles.inner}>
         <Text style={styles.icon}>{isBroke ? '💀' : '🍽️'}</Text>
         <Text style={styles.label}>Suggest Meal</Text>
       </View>
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 }
 

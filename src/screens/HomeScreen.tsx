@@ -1,20 +1,31 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
 import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withSpring,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 import { CATEGORIES, Category, Meal } from '../data/meals';
 import MealCard from '../components/MealCard';
 import SuggestButton from '../components/SuggestButton';
 import CategoryTabs from '../components/CategoryTabs';
+import Toast from '../components/Toast';
 import { useFavorites } from '../hooks/useFavorites';
 import { useMealSuggestion } from '../hooks/useMealSuggestion';
 
@@ -22,11 +33,29 @@ export default function HomeScreen() {
   const [isBrokeMode, setIsBrokeMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>(CATEGORIES.ALL);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
 
   const { favorites, toggleFavorite, removeFavorite, isFavorite } = useFavorites();
-  const { currentMeal, setCurrentMeal, suggestMeal } = useMealSuggestion(isBrokeMode, selectedCategory);
 
-  const handleSuggest = suggestMeal;
+  const handleNoMeals = useCallback(() => {
+    setSelectedCategory(CATEGORIES.ALL);
+    setToastMessage(`No ${isBrokeMode ? 'broke ' : ''}meals in that category — showing All instead`);
+    setToastVisible(true);
+  }, [isBrokeMode]);
+
+  const { currentMeal, setCurrentMeal, suggestMeal, suggestFromList } =
+    useMealSuggestion(isBrokeMode, selectedCategory, handleNoMeals);
+
+  const handleSuggest = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    suggestMeal();
+  }, [suggestMeal]);
+
+  const handleSuggestFromFavorites = useCallback(() => {
+    suggestFromList(favorites);
+    setShowFavorites(false);
+  }, [suggestFromList, favorites]);
 
   const handleToggleFavorite = useCallback(async () => {
     if (!currentMeal) return;
@@ -36,7 +65,8 @@ export default function HomeScreen() {
   const handleCopy = useCallback(async () => {
     if (!currentMeal) return;
     await Clipboard.setStringAsync(`${currentMeal.emoji} ${currentMeal.name}`);
-    Alert.alert('Copied!', `"${currentMeal.name}" copied to clipboard.`);
+    setToastMessage(`"${currentMeal.name}" copied to clipboard!`);
+    setToastVisible(true);
   }, [currentMeal]);
 
   const handleShare = useCallback(async () => {
@@ -50,49 +80,116 @@ export default function HomeScreen() {
     }
   }, [currentMeal]);
 
+  // Broke Mode border pulse animation
+  const brokeBorderOpacity = useSharedValue(1);
+  useEffect(() => {
+    if (isBrokeMode) {
+      brokeBorderOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.4, { duration: 700 }),
+          withTiming(1, { duration: 700 }),
+        ),
+        -1,
+        false,
+      );
+    } else {
+      cancelAnimation(brokeBorderOpacity);
+      brokeBorderOpacity.value = withTiming(1, { duration: 200 });
+    }
+  }, [isBrokeMode]);
+
+  const brokeBorderAnimStyle = useAnimatedStyle(() => ({
+    borderColor: `rgba(255, 107, 53, ${brokeBorderOpacity.value})`,
+  }));
+
+  // Favorites badge pulse animation
+  const prevFavCount = useRef(favorites.length);
+  const badgeScale = useSharedValue(1);
+  useEffect(() => {
+    if (favorites.length > prevFavCount.current) {
+      badgeScale.value = withSequence(
+        withSpring(1.4, { damping: 6, stiffness: 300 }),
+        withSpring(1, { damping: 8, stiffness: 200 }),
+      );
+    }
+    prevFavCount.current = favorites.length;
+  }, [favorites.length]);
+
+  const badgeAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
+  }));
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Background decorative circle */}
+      <View style={styles.bgCircle} pointerEvents="none" />
+
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.appName}>hungr</Text>
-          <TouchableOpacity
-            style={[styles.favoritesToggle, showFavorites && styles.favoritesToggleActive]}
-            onPress={() => setShowFavorites((v) => !v)}
-          >
-            <Text style={[styles.favoritesToggleText, showFavorites && styles.favoritesToggleTextActive]}>
-              {showFavorites ? '← Back' : `❤️ ${favorites.length}`}
-            </Text>
-          </TouchableOpacity>
+          <View>
+            <Text style={styles.appName}>hungr</Text>
+            <View style={styles.appNameUnderline} />
+          </View>
+          <Animated.View style={badgeAnimStyle}>
+            <TouchableOpacity
+              style={[styles.favoritesToggle, showFavorites && styles.favoritesToggleActive]}
+              onPress={() => setShowFavorites((v) => !v)}
+            >
+              <Text style={[styles.favoritesToggleText, showFavorites && styles.favoritesToggleTextActive]}>
+                {showFavorites ? '← Back' : `❤️ ${favorites.length}`}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
 
         {showFavorites ? (
-          <FavoritesView
-            favorites={favorites}
-            onSelect={(meal) => {
-              setCurrentMeal(meal);
-              setShowFavorites(false);
-            }}
-            onRemove={removeFavorite}
-          />
+          <>
+            <FavoritesView
+              favorites={favorites}
+              onSelect={(meal) => {
+                setCurrentMeal(meal);
+                setShowFavorites(false);
+              }}
+              onRemove={removeFavorite}
+            />
+            {favorites.length > 0 && (
+              <View style={styles.suggestFromFavWrapper}>
+                <TouchableOpacity
+                  style={styles.suggestFromFavButton}
+                  onPress={handleSuggestFromFavorites}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.suggestFromFavText}>🎲 Suggest from Favorites</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
         ) : (
           <>
             {/* Title */}
             <Text style={styles.title}>What Should{'\n'}I Eat?</Text>
 
             {/* Broke Mode Toggle */}
-            <TouchableOpacity
-              style={[styles.brokeToggle, isBrokeMode && styles.brokeToggleActive]}
-              onPress={() => {
-                setIsBrokeMode((v) => !v);
-                setCurrentMeal(null);
-              }}
-              activeOpacity={0.8}
+            <Animated.View
+              style={[
+                styles.brokeToggle,
+                isBrokeMode && styles.brokeToggleActive,
+                isBrokeMode && brokeBorderAnimStyle,
+              ]}
             >
-              <Text style={[styles.brokeToggleText, isBrokeMode && styles.brokeToggleTextActive]}>
-                {isBrokeMode ? '💀 Broke Mode ON' : "💀 I'm Broke Mode"}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsBrokeMode((v) => !v);
+                  setCurrentMeal(null);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.brokeToggleText, isBrokeMode && styles.brokeToggleTextActive]}>
+                  {isBrokeMode ? '💀 Broke Mode ON' : "💀 I'm Broke Mode"}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
 
             {/* Category Tabs */}
             <View style={styles.tabsWrapper}>
@@ -102,12 +199,21 @@ export default function HomeScreen() {
                   setSelectedCategory(cat);
                   setCurrentMeal(null);
                 }}
+                isBrokeMode={isBrokeMode}
               />
             </View>
+
+            {/* Toast */}
+            <Toast
+              message={toastMessage}
+              visible={toastVisible}
+              onHide={() => setToastVisible(false)}
+            />
 
             {/* Meal Card */}
             <View style={styles.cardWrapper}>
               <MealCard
+                key={currentMeal?.id ?? 'empty'}
                 meal={currentMeal}
                 isFavorite={isFavorite(currentMeal)}
                 onToggleFavorite={handleToggleFavorite}
@@ -147,8 +253,8 @@ function FavoritesView({ favorites, onSelect, onRemove }: FavoritesViewProps) {
   if (favorites.length === 0) {
     return (
       <View style={styles.emptyFavorites}>
-        <Text style={styles.emptyFavoritesEmoji}>🤍</Text>
-        <Text style={styles.emptyFavoritesText}>No favorites yet.{'\n'}Save a meal to see it here!</Text>
+        <Text style={styles.emptyFavoritesEmoji}>🫙</Text>
+        <Text style={styles.emptyFavoritesText}>Nothing here yet — {'\n'}tap ❤️ on a meal to save it</Text>
       </View>
     );
   }
@@ -157,18 +263,31 @@ function FavoritesView({ favorites, onSelect, onRemove }: FavoritesViewProps) {
     <ScrollView style={styles.favoritesList} contentContainerStyle={styles.favoritesListContent}>
       <Text style={styles.favoritesTitle}>Your Favorites</Text>
       {favorites.map((meal) => (
-        <View key={meal.id} style={styles.favoriteItem}>
-          <TouchableOpacity style={styles.favoriteItemInfo} onPress={() => onSelect(meal)}>
-            <Text style={styles.favoriteItemEmoji}>{meal.emoji}</Text>
-            <View>
-              <Text style={styles.favoriteItemName}>{meal.name}</Text>
-              <Text style={styles.favoriteItemCategory}>{meal.category}</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onRemove(meal)} style={styles.favoriteRemove}>
-            <Text style={styles.favoriteRemoveText}>✕</Text>
-          </TouchableOpacity>
-        </View>
+        <Swipeable
+          key={meal.id}
+          renderRightActions={() => (
+            <TouchableOpacity
+              style={styles.swipeDeleteAction}
+              onPress={() => onRemove(meal)}
+            >
+              <Text style={styles.swipeDeleteText}>🗑️ Remove</Text>
+            </TouchableOpacity>
+          )}
+          overshootRight={false}
+        >
+          <View style={styles.favoriteItem}>
+            <TouchableOpacity style={styles.favoriteItemInfo} onPress={() => onSelect(meal)}>
+              <Text style={styles.favoriteItemEmoji}>{meal.emoji}</Text>
+              <View>
+                <Text style={styles.favoriteItemName}>{meal.name}</Text>
+                <Text style={styles.favoriteItemCategory}>{meal.category}</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onRemove(meal)} style={styles.favoriteRemove}>
+              <Text style={styles.favoriteRemoveText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        </Swipeable>
       ))}
     </ScrollView>
   );
@@ -178,6 +297,16 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFF8F5',
+  },
+  bgCircle: {
+    position: 'absolute',
+    top: -120,
+    right: -120,
+    width: 400,
+    height: 400,
+    borderRadius: 999,
+    backgroundColor: '#FF6B35',
+    opacity: 0.06,
   },
   container: {
     flex: 1,
@@ -191,10 +320,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   appName: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: '800',
     color: '#FF6B35',
-    letterSpacing: -0.5,
+    letterSpacing: -1,
+  },
+  appNameUnderline: {
+    height: 3,
+    backgroundColor: '#FF6B35',
+    borderRadius: 2,
+    marginTop: 2,
+    width: '60%',
   },
   favoritesToggle: {
     paddingVertical: 6,
@@ -245,7 +381,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   tabsWrapper: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   cardWrapper: {
     flex: 1,
@@ -298,7 +434,7 @@ const styles = StyleSheet.create({
   },
   favoritesListContent: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   favoritesTitle: {
     fontSize: 22,
@@ -346,5 +482,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#CCC',
     fontWeight: '600',
+  },
+  swipeDeleteAction: {
+    backgroundColor: '#FF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    borderRadius: 16,
+  },
+  swipeDeleteText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  suggestFromFavWrapper: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    paddingTop: 8,
+  },
+  suggestFromFavButton: {
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  suggestFromFavText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FF6B35',
   },
 });
