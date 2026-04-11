@@ -8,6 +8,7 @@ import {
   Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Swipeable } from 'react-native-gesture-handler';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
@@ -120,11 +121,13 @@ export default function HomeScreen() {
   }));
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Background decorative circle */}
-      <View style={styles.bgCircle} pointerEvents="none" />
-
-      <View style={styles.container}>
+    <LinearGradient
+      colors={['#FFE0CC', '#FFF4EE', '#FFFFFF']}
+      locations={[0, 0.45, 1]}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <View>
@@ -239,7 +242,8 @@ export default function HomeScreen() {
           </>
         )}
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
@@ -294,19 +298,12 @@ function FavoritesView({ favorites, onSelect, onRemove }: FavoritesViewProps) {
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFF8F5',
-  },
-  bgCircle: {
-    position: 'absolute',
-    top: -120,
-    right: -120,
-    width: 400,
-    height: 400,
-    borderRadius: 999,
-    backgroundColor: '#FF6B35',
-    opacity: 0.06,
+    backgroundColor: 'transparent',
   },
   container: {
     flex: 1,
