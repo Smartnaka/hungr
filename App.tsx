@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Updates from 'expo-updates';
@@ -9,7 +10,17 @@ async function onFetchUpdateAsync() {
     const update = await Updates.checkForUpdateAsync();
     if (update.isAvailable) {
       await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
+      Alert.alert(
+        'Update ready',
+        'A new version of hungr has been downloaded. Restart now to apply it.',
+        [
+          { text: 'Later', style: 'cancel' },
+          {
+            text: 'Restart',
+            onPress: () => Updates.reloadAsync(),
+          },
+        ],
+      );
     }
   } catch (error) {
     // Silently ignore update errors (e.g. in development / no network)
