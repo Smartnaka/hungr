@@ -1,5 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withSpring,
+  FadeIn,
+  ZoomIn,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Meal } from '../data/meals';
 
 interface MealCardProps {
@@ -9,37 +18,59 @@ interface MealCardProps {
 }
 
 export default function MealCard({ meal, isFavorite, onToggleFavorite }: MealCardProps) {
+  const emojiScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (meal) {
+      emojiScale.value = withSequence(
+        withSpring(1.35, { damping: 8, stiffness: 300 }),
+        withSpring(1, { damping: 10, stiffness: 200 }),
+      );
+    }
+  }, [meal]);
+
+  const emojiAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: emojiScale.value }],
+  }));
+
   if (!meal) {
     return (
-      <View style={[styles.card, styles.emptyCard]}>
+      <LinearGradient
+        colors={['#FFFFFF', '#FFF8F5']}
+        style={[styles.card, styles.emptyCard]}
+      >
         <Text style={styles.emptyEmoji}>🤔</Text>
         <Text style={styles.emptyText}>Tap the button{'\n'}to get a suggestion!</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.emoji}>{meal.emoji}</Text>
-      <Text style={styles.mealName}>{meal.name}</Text>
-      <Text style={styles.category}>{meal.category}</Text>
-      <TouchableOpacity
-        style={styles.favoriteButton}
-        onPress={onToggleFavorite}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-        <Text style={styles.favoriteText}>
-          {isFavorite ? 'Saved to favorites' : 'Save to favorites'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+    <Animated.View entering={FadeIn.duration(220)} style={styles.cardWrapper}>
+      <LinearGradient colors={['#FFFFFF', '#FFF8F5']} style={styles.card}>
+        <Animated.Text style={[styles.emoji, emojiAnimStyle]}>{meal.emoji}</Animated.Text>
+        <Text style={styles.mealName}>{meal.name}</Text>
+        <Text style={styles.category}>{meal.category}</Text>
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={onToggleFavorite}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+          <Text style={styles.favoriteText}>
+            {isFavorite ? 'Saved to favorites' : 'Save to favorites'}
+          </Text>
+        </TouchableOpacity>
+      </LinearGradient>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  cardWrapper: {
+    width: '100%',
+  },
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingVertical: 40,
     paddingHorizontal: 32,

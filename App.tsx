@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Updates from 'expo-updates';
 import HomeScreen from './src/screens/HomeScreen';
 
@@ -36,9 +37,11 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" backgroundColor="#FFF8F5" />
-      <HomeScreen />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="dark" backgroundColor="#FFF8F5" />
+        <HomeScreen />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
