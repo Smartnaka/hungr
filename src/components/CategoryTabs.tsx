@@ -1,7 +1,8 @@
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, StyleSheet, View } from 'react-native';
+import { ScrollView, Text, Pressable, StyleSheet, View } from 'react-native';
 import { CATEGORIES, Category, Meal } from '../data/meals';
 import meals from '../data/meals';
+import { colors, radii, spacing, typography } from '../theme';
 
 const TABS = Object.values(CATEGORIES) as Category[];
 
@@ -24,30 +25,24 @@ function getMealCount(tab: Category, isBrokeMode: boolean): number {
 
 export default function CategoryTabs({ selected, onSelect, isBrokeMode }: CategoryTabsProps) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.container}
-    >
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.container}>
       {TABS.map((tab) => {
         const isActive = tab === selected;
         const count = getMealCount(tab, isBrokeMode);
         return (
-          <TouchableOpacity
+          <Pressable
             key={tab}
-            style={[styles.tab, isActive && styles.activeTab]}
+            accessibilityRole="button"
+            accessibilityLabel={`Filter by ${tab}`}
             onPress={() => onSelect(tab)}
-            activeOpacity={0.7}
+            android_ripple={{ color: 'rgba(31,31,31,0.08)' }}
+            style={({ pressed }) => [styles.tab, isActive && styles.activeTab, pressed && styles.pressed]}
           >
-            <Text style={[styles.tabText, isActive && styles.activeTabText]}>
-              {tab}
-            </Text>
+            <Text style={[styles.tabText, isActive && styles.activeTabText]}>{tab}</Text>
             <View style={[styles.badge, isActive && styles.activeBadge]}>
-              <Text style={[styles.badgeText, isActive && styles.activeBadgeText]}>
-                {count}
-              </Text>
+              <Text style={[styles.badgeText, isActive && styles.activeBadgeText]}>{count}</Text>
             </View>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </ScrollView>
@@ -56,52 +51,53 @@ export default function CategoryTabs({ selected, onSelect, isBrokeMode }: Catego
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    gap: 8,
+    paddingHorizontal: spacing.screenMargin,
+    gap: spacing.xs,
   },
   tab: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: '#F0F0F0',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   activeTab: {
-    backgroundColor: '#FF6B35',
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
+    backgroundColor: colors.ctaBackground,
+    borderColor: colors.ctaBackground,
+  },
+  pressed: {
+    transform: [{ scale: 0.98 }],
   },
   tabText: {
-    fontSize: 14,
+    ...typography.scale.body,
+    color: colors.textSecondary,
     fontWeight: '600',
-    color: '#666',
   },
   activeTabText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   badge: {
-    backgroundColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    minWidth: 20,
+    minWidth: 24,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.background,
     alignItems: 'center',
   },
   activeBadge: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.24)',
   },
   badgeText: {
-    fontSize: 11,
+    ...typography.scale.caption,
+    color: colors.textSecondary,
     fontWeight: '700',
-    color: '#666',
   },
   activeBadgeText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
 });
