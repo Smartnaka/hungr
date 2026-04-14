@@ -46,7 +46,7 @@ export default function AppButton({
       {loading ? (
         <ActivityIndicator color={isPrimary ? colors.textInverse : colors.textPrimary} />
       ) : (
-        <Text style={[styles.text, isPrimary ? styles.primaryText : styles.secondaryText]}>{label}</Text>
+        <Text numberOfLines={1} style={[styles.text, isPrimary ? styles.primaryText : styles.secondaryText]}>{label}</Text>
       )}
     </Pressable>
   );
