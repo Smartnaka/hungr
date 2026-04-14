@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,18 +11,40 @@ import { colors, radii, spacing, typography } from './src/theme';
 
 const UPDATE_APPLIED_KEY = 'updateJustApplied';
 
-async function onFetchUpdateAsync() {
+async function checkForOtaUpdateOnLaunch() {
+  if (__DEV__) {
+    return;
+  }
+
   try {
     const update = await Updates.checkForUpdateAsync();
-    if (update.isAvailable) {
-      await Updates.fetchUpdateAsync();
-      await AsyncStorage.setItem(UPDATE_APPLIED_KEY, 'true');
-      await Updates.reloadAsync();
+
+    if (!update.isAvailable) {
+      return;
     }
+
+    Alert.alert('Update Available', 'A new app update is ready to install.', [
+      {
+        text: 'Later',
+        style: 'cancel',
+      },
+      {
+        text: 'Update Now',
+        onPress: () => {
+          void (async () => {
+            try {
+              await Updates.fetchUpdateAsync();
+              await AsyncStorage.setItem(UPDATE_APPLIED_KEY, 'true');
+              await Updates.reloadAsync();
+            } catch (error) {
+              console.log('OTA update fetch/reload failed:', error);
+            }
+          })();
+        },
+      },
+    ]);
   } catch (error) {
-    if (__DEV__) {
-      console.warn('OTA update check failed:', error);
-    }
+    console.log('OTA update check failed:', error);
   }
 }
 
@@ -45,7 +67,7 @@ export default function App() {
   const [bannerVisible, setBannerVisible] = useState(false);
 
   useEffect(() => {
-    void onFetchUpdateAsync();
+    void checkForOtaUpdateOnLaunch();
     void detectAndClearUpdateFlag().then(setIsNewUpdate);
   }, []);
 
