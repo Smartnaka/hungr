@@ -108,7 +108,7 @@ export default function HomeScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <View>
+            <View style={styles.headerCopy}>
               <Text style={styles.appName}>hungr</Text>
               <Text style={styles.headerSubtitle}>Fast, low-friction meal decisions</Text>
             </View>
@@ -134,59 +134,66 @@ export default function HomeScreen() {
               onRemove={removeFavorite}
               onSuggestFromFavorites={() => runSuggestion('favorites')}
               isLoadingSuggestion={isLoadingSuggestion}
+              onExitFavorites={() => setShowFavorites(false)}
             />
           ) : (
-            <>
-              <Text style={styles.title}>What should I eat today?</Text>
+            <View style={styles.contentArea}>
+              <ScrollView
+                contentContainerStyle={styles.mainScrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <Text style={styles.title}>What should I eat today?</Text>
 
-              <View style={styles.modeRow}>
-                <AppButton
-                  label={isBrokeMode ? 'Budget mode on' : 'Turn on budget mode'}
-                  variant={isBrokeMode ? 'primary' : 'secondary'}
-                  onPress={() => {
-                    setIsBrokeMode((value) => !value);
+                <View style={styles.modeRow}>
+                  <AppButton
+                    label={isBrokeMode ? 'Budget mode on' : 'Turn on budget mode'}
+                    variant={isBrokeMode ? 'primary' : 'secondary'}
+                    onPress={() => {
+                      setIsBrokeMode((value) => !value);
+                      setCurrentMeal(null);
+                    }}
+                    style={styles.modeButton}
+                  />
+                </View>
+
+                <CategoryTabs
+                  selected={selectedCategory}
+                  onSelect={(category) => {
+                    setSelectedCategory(category);
                     setCurrentMeal(null);
                   }}
-                  style={styles.modeButton}
+                  isBrokeMode={isBrokeMode}
                 />
-              </View>
 
-              <CategoryTabs
-                selected={selectedCategory}
-                onSelect={(category) => {
-                  setSelectedCategory(category);
-                  setCurrentMeal(null);
-                }}
-                isBrokeMode={isBrokeMode}
-              />
+                <Toast message={toastMessage} visible={toastVisible} onHide={() => setToastVisible(false)} />
 
-              <Toast message={toastMessage} visible={toastVisible} onHide={() => setToastVisible(false)} />
-
-              <View style={styles.cardWrapper}>
-                {isLoadingSuggestion ? (
-                  <SkeletonLoader />
-                ) : (
-                  <MealCard
-                    meal={currentMeal}
-                    isFavorite={isFavorite(currentMeal)}
-                    onToggleFavorite={handleToggleFavorite}
-                    hasSystemError={hasSystemError}
-                    onRetry={() => runSuggestion('all')}
-                  />
-                )}
-              </View>
-
-              {currentMeal && (
-                <View style={styles.actionRow}>
-                  <AppButton label="Copy meal" variant="secondary" onPress={handleCopy} style={styles.halfButton} />
-                  <AppButton label="Share meal" variant="secondary" onPress={handleShare} style={styles.halfButton} />
+                <View style={styles.cardWrapper}>
+                  {isLoadingSuggestion ? (
+                    <SkeletonLoader />
+                  ) : (
+                    <MealCard
+                      meal={currentMeal}
+                      isFavorite={isFavorite(currentMeal)}
+                      onToggleFavorite={handleToggleFavorite}
+                      hasSystemError={hasSystemError}
+                      onRetry={() => runSuggestion('all')}
+                    />
+                  )}
                 </View>
-              )}
+
+                {currentMeal && (
+                  <View style={styles.actionRow}>
+                    <AppButton label="Copy meal" variant="secondary" onPress={handleCopy} style={styles.halfButton} />
+                    <AppButton label="Share meal" variant="secondary" onPress={handleShare} style={styles.halfButton} />
+                  </View>
+                )}
+              </ScrollView>
 
               <View style={styles.buttonWrapper}>
                 <SuggestButton onPress={handleSuggest} isBroke={isBrokeMode} loading={isLoadingSuggestion} />
               </View>
-            </>
+            </View>
           )}
         </View>
       </KeyboardAvoidingView>
@@ -204,6 +211,7 @@ interface FavoritesViewProps {
   onRemove: (meal: Meal) => void;
   onSuggestFromFavorites: () => void;
   isLoadingSuggestion: boolean;
+  onExitFavorites: () => void;
 }
 
 function FavoritesView({
@@ -216,6 +224,7 @@ function FavoritesView({
   onRemove,
   onSuggestFromFavorites,
   isLoadingSuggestion,
+  onExitFavorites,
 }: FavoritesViewProps) {
   return (
     <View style={styles.favoritesWrapper}>
@@ -234,11 +243,11 @@ function FavoritesView({
           title="No favorites yet"
           description="Save meals from the suggestion card so you can pick from them faster next time."
           ctaLabel="Go suggest a meal"
-          onCtaPress={onClearSearch}
+          onCtaPress={onExitFavorites}
         />
       ) : (
         <>
-          <ScrollView contentContainerStyle={styles.favoritesListContent}>
+          <ScrollView contentContainerStyle={styles.favoritesListContent} showsVerticalScrollIndicator={false}>
             {favorites.map((meal) => (
               <View key={meal.id} style={styles.favoriteItem}>
                 <View style={styles.favoriteInfo}>
@@ -249,8 +258,8 @@ function FavoritesView({
                   </View>
                 </View>
                 <View style={styles.favoriteActions}>
-                  <AppButton label="Use" variant="secondary" onPress={() => onSelect(meal)} style={styles.smallBtn} />
-                  <AppButton label="Remove" variant="ghost" onPress={() => onRemove(meal)} style={styles.smallBtn} />
+                  <AppButton label="Use meal" variant="primary" onPress={() => onSelect(meal)} style={styles.smallBtn} />
+                  <AppButton label="Remove" variant="secondary" onPress={() => onRemove(meal)} style={styles.smallBtn} />
                 </View>
               </View>
             ))}
@@ -283,9 +292,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spacing.md,
+    gap: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  headerCopy: {
+    flex: 1,
+    paddingRight: spacing.sm,
   },
   appName: {
     ...typography.scale.h1,
@@ -296,7 +310,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   favoriteToggleBtn: {
-    width: 164,
+    minWidth: 148,
+    maxWidth: 176,
+    flexShrink: 0,
+  },
+  contentArea: {
+    flex: 1,
+  },
+  mainScrollContent: {
+    gap: spacing.md,
+    paddingBottom: spacing.sm,
   },
   title: {
     ...typography.scale.display,
@@ -306,11 +329,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   modeButton: {
-    minWidth: 220,
+    width: '100%',
   },
   cardWrapper: {
-    flex: 1,
-    justifyContent: 'center',
+    marginTop: spacing.xs,
   },
   actionRow: {
     flexDirection: 'row',
@@ -320,17 +342,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonWrapper: {
-    paddingBottom: spacing.xl,
-    paddingTop: spacing.xs,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
   },
   favoritesWrapper: {
     flex: 1,
     gap: spacing.md,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xs,
   },
   favoritesListContent: {
     gap: spacing.sm,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.sm,
   },
   favoriteItem: {
     borderRadius: radii.md,
@@ -360,11 +382,10 @@ const styles = StyleSheet.create({
   },
   favoriteActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.xs,
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   smallBtn: {
-    minWidth: 96,
-    minHeight: 44,
+    flex: 1,
   },
 });

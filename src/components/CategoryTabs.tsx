@@ -51,7 +51,7 @@ export default function CategoryTabs({ selected, onSelect, isBrokeMode }: Catego
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.screenMargin,
+    paddingRight: spacing.sm,
     gap: spacing.xs,
   },
   tab: {
