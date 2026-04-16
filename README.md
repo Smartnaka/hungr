@@ -1,32 +1,40 @@
 # hungr 🍽️
 
-> **What Should I Eat?** — A fast, offline mobile app that kills food decision fatigue.
+> **What should I eat?** — A fast, offline-first mobile app that eliminates food decision fatigue.
 
 ## Overview
 
-hungr is a lightweight React Native (Expo) app that suggests random meals from a curated local list. No internet required. No backend. Just tap and eat.
+hungr is a lightweight React Native (Expo) app built with TypeScript. It suggests random meals from a curated local list with zero internet required and no backend. Just tap and eat.
 
 ## Features
 
-### MVP
-- 🎲 **Random meal suggestion** — tap "Suggest Meal" to get an instant pick
+- 🎲 **Random meal suggestion** — instant pick with a single tap
 - 🗂️ **Category filtering** — All, Local, Fast Food, Snacks
+- 💸 **Budget mode** — filters to budget-friendly meals only
+- ❤️ **Favorites** — save and manage meals, persisted with AsyncStorage
+- 🔍 **Search favorites** — filter your saved meals by name
+- 🎯 **Suggest from favorites** — get a random pick from your saved list
+- 📋 **Copy meal** — copy the meal name to clipboard
+- 🔗 **Share meal** — share your pick via the native share sheet
+- 💫 **Haptic feedback** — tactile response on key interactions
+- 🦴 **Skeleton loading** — polished loading state while fetching a suggestion
+- ⚠️ **Error + retry** — graceful error state with one-tap retry
 - 📱 **Offline-first** — works with zero connectivity
-
-### Phase 2 (included)
-- 💀 **I'm Broke Mode** — filters to budget-friendly meals only
-- ❤️ **Favorites** — save meals with AsyncStorage persistence
-- 📋 **Copy** — copy meal name to clipboard
-- 🔗 **Share** — share your meal pick via the native share sheet
 
 ## Tech Stack
 
 | Layer | Choice |
 |---|---|
 | Framework | React Native (Expo ~55) |
-| Storage | AsyncStorage |
+| Language | TypeScript |
+| Storage | AsyncStorage (~2.2.0) |
+| Animations | react-native-reanimated (~4.2.1) |
+| Gestures | react-native-gesture-handler (~2.30.0) |
+| Haptics | expo-haptics |
+| Gradients | expo-linear-gradient |
 | Clipboard | expo-clipboard |
-| Sharing | React Native Share API |
+| Sharing | expo-sharing |
+| Safe Area | react-native-safe-area-context |
 | Backend | None |
 
 ## Getting Started
@@ -89,23 +97,42 @@ eas build --profile production --platform all
 
 ```
 hungr/
-├── App.js                  # Entry point
-├── app.json                # Expo config
+├── App.tsx                     # Entry point
+├── app.json                    # Expo config
+├── eas.json                    # EAS build profiles
 ├── src/
 │   ├── data/
-│   │   └── meals.js        # Local meal list (30 meals, categorised)
+│   │   └── meals.ts            # Local meal list (categorised)
 │   ├── components/
-│   │   ├── MealCard.js     # Meal display card
-│   │   ├── SuggestButton.js
-│   │   └── CategoryTabs.js
-│   └── screens/
-│       └── HomeScreen.js   # Main screen
+│   │   ├── CategoryTabs.tsx    # Category filter tabs
+│   │   ├── MealCard.tsx        # Meal display card
+│   │   ├── SuggestButton.tsx   # Primary CTA button
+│   │   ├── Toast.tsx           # Inline toast notification
+│   │   └── ui/                 # Reusable UI primitives
+│   │       ├── AppButton.tsx
+│   │       ├── AppCard.tsx
+│   │       ├── EmptyState.tsx
+│   │       ├── IconButton.tsx
+│   │       ├── InputField.tsx
+│   │       └── SkeletonLoader.tsx
+│   ├── hooks/
+│   │   ├── useFavorites.ts     # Favorites state + AsyncStorage
+│   │   └── useMealSuggestion.ts # Random meal selection logic
+│   ├── screens/
+│   │   ├── HomeScreen.tsx      # Main suggestion screen
+│   │   └── SplashScreen.tsx    # Launch screen
+│   └── theme/                  # Design system tokens
+│       ├── colors.ts
+│       ├── spacing.ts
+│       ├── typography.ts
+│       ├── shadows.ts
+│       └── index.ts
 └── assets/
 ```
 
 ## Data Structure
 
-```js
+```ts
 {
   id: 1,
   name: 'Jollof Rice',
