@@ -32,8 +32,7 @@ export default function FavouritesScreen({ onNavigateToSuggest }: FavouritesScre
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsLoadingSuggestion(true);
     await new Promise((resolve) => setTimeout(resolve, 280));
-    const pool = favorites;
-    const picked = pool[Math.floor(Math.random() * pool.length)];
+    const picked = favorites[Math.floor(Math.random() * favorites.length)];
     setIsLoadingSuggestion(false);
     onNavigateToSuggest(picked);
   }, [favorites, onNavigateToSuggest]);
