@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -6,10 +6,17 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Updates from 'expo-updates';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from './src/screens/HomeScreen';
+import FavouritesScreen from './src/screens/FavouritesScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import TabBar, { TabName } from './src/components/TabBar';
+import { useFavorites } from './src/hooks/useFavorites';
+import { useSettings } from './src/hooks/useSettings';
 import { colors, radii, spacing, typography } from './src/theme';
+import { Meal } from './src/data/meals';
 
 const UPDATE_APPLIED_KEY = 'updateJustApplied';
+const APP_VERSION = '1.0.0';
 
 async function checkForOtaUpdateOnLaunch() {
   if (__DEV__) {
@@ -65,6 +72,11 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false);
   const [isNewUpdate, setIsNewUpdate] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabName>('suggest');
+  const [preloadedMeal, setPreloadedMeal] = useState<Meal | null>(null);
+
+  const { favorites } = useFavorites();
+  const { settings, updateSettings, isLoaded } = useSettings();
 
   useEffect(() => {
     void checkForOtaUpdateOnLaunch();
@@ -79,12 +91,54 @@ export default function App() {
     }
   }, [splashDone, isNewUpdate]);
 
+  const handleNavigateToSuggest = useCallback((meal?: Meal) => {
+    if (meal) {
+      setPreloadedMeal(meal);
+    }
+    setActiveTab('suggest');
+  }, []);
+
+  const handlePreloadConsumed = useCallback(() => {
+    setPreloadedMeal(null);
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <StatusBar style="dark" backgroundColor="transparent" translucent />
         {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
-        <HomeScreen />
+
+        {splashDone && isLoaded && (
+          <View style={styles.appShell}>
+            <View style={styles.screenArea}>
+              {activeTab === 'suggest' && (
+                <HomeScreen
+                  isBrokeModeDefault={settings.isBrokeModeDefault}
+                  defaultCategory={settings.defaultCategory}
+                  preloadedMeal={preloadedMeal}
+                  onPreloadConsumed={handlePreloadConsumed}
+                />
+              )}
+              {activeTab === 'favourites' && (
+                <FavouritesScreen onNavigateToSuggest={handleNavigateToSuggest} />
+              )}
+              {activeTab === 'settings' && (
+                <SettingsScreen
+                  settings={settings}
+                  onUpdateSettings={updateSettings}
+                  appVersion={APP_VERSION}
+                />
+              )}
+            </View>
+
+            <TabBar
+              active={activeTab}
+              onPress={setActiveTab}
+              favouriteCount={favorites.length}
+            />
+          </View>
+        )}
+
         {bannerVisible && (
           <View style={styles.updateBanner} accessibilityLiveRegion="polite">
             <Text style={styles.updateBannerText}>App updated successfully.</Text>
@@ -97,6 +151,12 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: {
+    flex: 1,
+  },
+  appShell: {
+    flex: 1,
+  },
+  screenArea: {
     flex: 1,
   },
   updateBanner: {
